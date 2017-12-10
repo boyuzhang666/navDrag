@@ -86,11 +86,10 @@
     for (let i = 0, len = aLi.length; i < len; i++) {
       aliOffset.push([aLi[i].offsetTop, aLi[i].offsetLeft]);
       // console.log(aliOffset);
+      // 所有图片会重叠why?
+      // 前一个元素设置absolute后,发生reflow,下一个float的元素会与该绝对定位元素重叠
+      // float元素会浮动到父元素框或浮动元素框而停止
 
-      // // 所有图片会重叠 => 读取属性比设置属性慢很多,CPU时钟序列?
-      // aLi[i].style.position = "absolute";
-      // aLi[i].style.top = aliOffset[i][0] + "px";
-      // aLi[i].style.left = aliOffset[i][1] + "px";
       setTimeout(function () {
         aLi[i].style.position = "absolute";
         aLi[i].style.top = aliOffset[i][0] + "px";
@@ -118,13 +117,16 @@
       z:1
     }
 
-    function drag(e) {
+    function drag() {
       var e = e || window.event;
       e.preventDefault();
       e.stopPropagation();
+      // e.target触发事件的最小目标 e.currentTarget注册该事件监听的对象
+      // addEventListener(type,handler,useCapture) arg3默认false
       switch (e.type) {
         case "mousedown":
           if (e.target.parentNode.tagName === "LI") {
+            // 节流
             data.toggle = true;
             data.ele = e.target.parentNode;
             data.startX = data.ele.offsetLeft;
@@ -151,7 +153,6 @@
             // 鼠标在ul内的x,y值(用来判断进入哪个元素上方)
             var xR = data.moveX - oPhoto.offsetLeft;
             var yR = data.moveY - oPhoto.offsetTop;
-
             // left < x1 < left + width 鼠标进入元素上方
             for (var n = 0, len = aLi.length; n < len; n++) {
               if (
@@ -179,6 +180,9 @@
             data.trigger.style.top = data.startY + "px";
             data.trigger.style.transform = "";
             data.trigger.style.boxShadow = "";
+          }else{
+            data.ele.style.left = data.startX + "px";
+            data.ele.style.top = data.startY + "px";
           }
           break;
       }
