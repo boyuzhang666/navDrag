@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="KeyWords" content="">
+  <title>导航拖拽</title>
+  <style>
+    body,
+    ul {
+      margin: 0;
+    }
+
+    .photo {
+      width: 640px;
+      height: 400px;
+      margin: 100px auto;
+      border: 1px solid #ccc;
+    }
+
+    ul {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+    }
+
+    li {
+      list-style: none;
+      width: 200px;
+      height: 120px;
+      margin: 10px 0 0 10px;
+      float: left;
+    }
+
+    li img {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="photo">
+    <ul>
+      <li>
+        <img src="images/1.png" alt="">
+      </li>
+      <li>
+        <img src="images/2.png" alt="">
+      </li>
+      <li>
+        <img src="images/3.png" alt="">
+      </li>
+      <li>
+        <img src="images/4.png" alt="">
+      </li>
+      <li>
+        <img src="images/5.png" alt="">
+      </li>
+      <li>
+        <img src="images/6.png" alt="">
+      </li>
+      <li>
+        <img src="images/7.png" alt="">
+      </li>
+      <li>
+        <img src="images/8.png" alt="">
+      </li>
+      <li>
+        <img src="images/9.png" alt="">
+      </li>
+    </ul>
+  </div>
+
+  <script>
+    //1: 所有li变成定位
+    var aLi = document.getElementsByTagName("li");
+    var aliOffset = [];
+
+    // len先存入变量,避免每次循环读取aLi的属性(性能方面)
+    // 所有的位置放入数组内(二维数组)
+    for (let i = 0, len = aLi.length; i < len; i++) {
+      aliOffset.push([aLi[i].offsetTop, aLi[i].offsetLeft]);
+      // console.log(aliOffset);
+
+      // // 所有图片会重叠 => 读取属性比设置属性慢很多,CPU时钟序列?
+      // aLi[i].style.position = "absolute";
+      // aLi[i].style.top = aliOffset[i][0] + "px";
+      // aLi[i].style.left = aliOffset[i][1] + "px";
+      setTimeout(function () {
+        aLi[i].style.position = "absolute";
+        aLi[i].style.top = aliOffset[i][0] + "px";
+        aLi[i].style.left = aliOffset[i][1] + "px";
+        aLi[i].style.margin = 0;
+      }, 0)
+    }
+
+    //2: 每个li实现拖拽
+    var oPhoto = document.getElementsByClassName("photo")[0];
+    oPhoto.addEventListener("mousedown", drag);
+    oPhoto.addEventListener("mousemove", drag);
+    oPhoto.addEventListener("mouseup", drag);
+
+    var data = {
+      toggle: false, // 判断是否点中
+      ele: "", // 当前选中元素
+      startX: 0,
+      startY: 0,
+      clickX: 0,
+      clickY: 0,
+      moveX: 0,
+      moveY: 0,
+      trigger: 0,
+      z:1
+    }
+
+    function drag(e) {
+      var e = e || window.event;
+      e.preventDefault();
+      e.stopPropagation();
+      switch (e.type) {
+        case "mousedown":
+          if (e.target.parentNode.tagName === "LI") {
+            data.toggle = true;
+            data.ele = e.target.parentNode;
+            data.startX = data.ele.offsetLeft;
+            data.startY = data.ele.offsetTop;
+            data.clickX = e.clientX;
+            data.clickY = e.clientY;
+            // console.log(1);
+          }
+          break;
+        case "mousemove":
+          if (data.toggle) {
+            // 获取鼠标移动时的位置
+            data.moveX = e.clientX;
+            data.moveY = e.clientY;
+            var xOffset = data.startX + data.moveX - data.clickX;
+            var yOffset = data.startY + data.moveY - data.clickY;
+            // 给元素设置新位置
+            data.ele.style.left = xOffset + "px";
+            data.ele.style.top = yOffset + "px";
+
+            // data.ele.style.zIndex = "999";
+            data.ele.style.zIndex = data.z++;
+            
+            // 鼠标在ul内的x,y值(用来判断进入哪个元素上方)
+            var xR = data.moveX - oPhoto.offsetLeft;
+            var yR = data.moveY - oPhoto.offsetTop;
+
+            // left < x1 < left + width 鼠标进入元素上方
+            for (var n = 0, len = aLi.length; n < len; n++) {
+              if (
+                data.ele != aLi[n] &&
+                xR > aLi[n].offsetLeft && xR < aLi[n].offsetLeft + aLi[n].offsetWidth &&
+                yR > aLi[n].offsetTop && yR < aLi[n].offsetTop + aLi[n].offsetHeight
+              ) {
+                console.log("碰撞成功");
+                aLi[n].style.transform = "scale(0.9)";
+                aLi[n].style.boxShadow = "0 0 10px 10px rgba(220,220,220,.6)";
+                // 保存进入的目标元素
+                data.trigger = aLi[n];
+              }
+            }
+          }
+          break;
+        case "mouseup":
+          data.toggle = false;
+          if(data.trigger){
+            // 两元素交换位置
+            data.ele.style.left = data.trigger.offsetLeft + "px";
+            data.ele.style.top = data.trigger.offsetTop + "px";
+
+            data.trigger.style.left = data.startX + "px";
+            data.trigger.style.top = data.startY + "px";
+            data.trigger.style.transform = "";
+            data.trigger.style.boxShadow = "";
+          }
+          break;
+      }
+    }
+  </script>
+</body>
+
+</html>
